@@ -1,28 +1,38 @@
 import streamlit as st
 import streamlit_authenticator as stauth
 
-names = ["Rom"]
-usernames = ["romtaug"]
-passwords = ["motdepassefort"]
+name = "Rom"
+username = "romtaug"
+password = "motdepassefort"
 
-hashed_passwords = stauth.Hasher(passwords).generate()
+hashed_password = stauth.Hasher.hash(password)
+
+credentials = {
+    "usernames": {
+        username: {
+            "name": name,
+            "password": hashed_password,
+        }
+    }
+}
 
 authenticator = stauth.Authenticate(
-    dict(credentials=dict(usernames={
-        usernames[0]: dict(name=names[0], password=hashed_passwords[0])
-    })),
-    "app_cookie",
-    "une_signature_tres_longue_et_aleatoire",
+    credentials=credentials,
+    cookie_name="app_cookie",
+    cookie_key="une_cle_secrete_tres_longue_et_aleatoire",
     cookie_expiry_days=30,
 )
 
-name, authentication_status, username = authenticator.login("Login", "main")
+authenticator.login(location="main", key="Login")
+
+authentication_status = st.session_state.get("authentication_status")
+name = st.session_state.get("name")
 
 if authentication_status is False:
     st.error("Identifiant ou mot de passe incorrect")
 elif authentication_status is None:
-    st.warning("Entrez vos identifiants")
-elif authentication_status:
-    authenticator.logout("Logout", "sidebar")
+    st.warning("Veuillez vous connecter")
+else:
+    authenticator.logout(location="sidebar", key="Logout")
     st.title(f"Bonjour {name} 👋")
     st.write("✅ Accès autorisé")
